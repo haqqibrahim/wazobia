@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Language Form</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <form
+      id="languageForm"
+      class="bg-white shadow-md rounded-xl p-6 w-full max-w-md space-y-4"
+    >
+      <h2 class="text-2xl font-semibold text-center text-gray-800">
+        Language Preference Form
+      </h2>
+
+      <!-- First Name -->
+      <div>
+        <label for="firstName" class="block text-sm font-medium text-gray-700"
+          >First Name</label
+        >
+        <input
+          type="text"
+          id="firstName"
+          required
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Last Name -->
+      <div>
+        <label for="lastName" class="block text-sm font-medium text-gray-700"
+          >Last Name</label
+        >
+        <input
+          type="text"
+          id="lastName"
+          required
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Phone -->
+      <div>
+        <label for="phone" class="block text-sm font-medium text-gray-700"
+          >Phone Number</label
+        >
+        <input
+          type="tel"
+          id="phone"
+          required
+          pattern="^(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4,7}$"
+          placeholder="e.g. +234123456789"
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <!-- Default Language -->
+      <div>
+        <label for="defaultLang" class="block text-sm font-medium text-gray-700"
+          >Default Language</label
+        >
+        <select
+          id="defaultLang"
+          required
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Select language</option>
+          <option value="en">English</option>
+          <option value="ig">Igbo</option>
+          <option value="yo">Yoruba</option>
+          <option value="ha">Hausa</option>
+        </select>
+      </div>
+
+      <!-- Translate To -->
+      <div>
+        <label for="translateTo" class="block text-sm font-medium text-gray-700"
+          >Translate To</label
+        >
+        <select
+          id="translateTo"
+          required
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Select language</option>
+          <option value="en">English</option>
+          <option value="ig">Igbo</option>
+          <option value="yo">Yoruba</option>
+          <option value="ha">Hausa</option>
+        </select>
+      </div>
+
+      <!-- Output Format (Dropdown) -->
+      <div>
+        <label
+          for="outputFormat"
+          class="block text-sm font-medium text-gray-700"
+          >Output Format</label
+        >
+        <select
+          id="outputFormat"
+          required
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Select format</option>
+          <option value="text">Text</option>
+          <option value="voice">Voice</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+
+      <!-- Submit -->
+      <button
+        type="submit"
+        id="submitBtn"
+        disabled
+        class="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition disabled:opacity-50"
+      >
+        Submit
+      </button>
+    </form>
+
+    <script>
+      const form = document.getElementById("languageForm");
+      const inputs = form.querySelectorAll("input, select");
+      const submitBtn = document.getElementById("submitBtn");
+
+      function validateForm() {
+        let isValid = true;
+        inputs.forEach((input) => {
+          if (!input.value || !input.checkValidity()) {
+            isValid = false;
+          }
+        });
+        submitBtn.disabled = !isValid;
+      }
+
+      inputs.forEach((input) => {
+        input.addEventListener("input", () => {
+          input.reportValidity();
+          validateForm();
+        });
+        input.addEventListener("change", validateForm);
+      });
+
+      validateForm();
+
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const data = {
+          firstName: document.getElementById("firstName").value,
+          lastName: document.getElementById("lastName").value,
+          phone: document.getElementById("phone").value,
+          defaultLang: document.getElementById("defaultLang").value,
+          translateTo: document.getElementById("translateTo").value,
+          outputFormat: document.getElementById("outputFormat").value,
+        };
+
+        fetch("https://", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error("Network response was not ok");
+            return response.text();
+          })
+          .then(() => {
+            alert("Form submitted successfully!");
+            form.reset();
+            validateForm();
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Failed to submit the form.");
+          });
+      });
+    </script>
+  </body>
+</html>
