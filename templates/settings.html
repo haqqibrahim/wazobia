@@ -94,6 +94,10 @@
       >
         Update Preferences
       </button>
+      <p class="text-center text-sm text-gray-600 mt-2">
+        New user?
+        <a href="/signup" class="text-blue-500 hover:underline">Sign up here</a>
+      </p>
     </form>
 
     <script>
@@ -124,28 +128,30 @@
       form.addEventListener("submit", function (event) {
         event.preventDefault();
 
+        // Match backend expected keys
         const data = {
-          phone: document.getElementById("phone").value,
-          defaultLang: document.getElementById("defaultLang").value,
-          translateTo: document.getElementById("translateTo").value,
-          outputFormat: document.getElementById("outputFormat").value,
+          phone_number: document.getElementById("phone").value,
+          default_language: document.getElementById("defaultLang").value,
+          output_language: document.getElementById("translateTo").value,
+          output_format: document.getElementById("outputFormat").value,
         };
 
-        fetch("https://", {
+        fetch("/settings", { // Use relative path if served from same domain
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         })
-          .then((response) => {
-            if (!response.ok) throw new Error("Network response was not ok");
-            return response.text();
-          })
-          .then(() => {
-            alert("Preferences updated successfully!");
-            form.reset();
-            validateForm();
+          .then((response) => response.json())
+          .then((result) => {
+            if (result.status === "success") {
+              alert("Preferences updated successfully, you can now return to WhatsApp!");
+              form.reset();
+              validateForm();
+            } else {
+              alert(result.error || "Failed to update preferences.");
+            }
           })
           .catch((error) => {
             console.error("Error:", error);

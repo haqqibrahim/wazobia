@@ -2,10 +2,9 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import PlainTextResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from database import get_db, Settings
+from database import get_db, User  # Changed from Settings to User
 import redis
 
 from wa_handler import send_message, get_whatsapp_media, send_voice_message
@@ -14,7 +13,7 @@ from models import Translator
 
 app = FastAPI()
 # Add static files mounting
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Configure templates
 templates = Jinja2Templates(directory="templates")
@@ -30,6 +29,7 @@ REDIS_DECODE_RESPONSE = os.environ.get("REDIS_DECODE_RESPONSE")
 REDIS_USERNAME = os.environ.get("REDIS_USERNAME")
 REDIS_PASSWORD = os.environ.get("REDIS_PASSWORD")
 REDIS_PORT = os.environ.get("REDIS_PORT")
+SIGNUP_PAGE=os.environ.get("SIGNUP")
 
 r = redis.Redis(
     host=REDIS_HOST,
@@ -43,24 +43,24 @@ translator = Translator()
 
 
 # Add this after your imports
-async def get_user_settings(phone_number: str, db: Session) -> Settings:
+async def get_user_settings(phone_number: str, db: Session) -> User:  # Changed return type
     """
     Helper function to get user settings from database
     Returns None if user not found
     """
-    settings = db.query(Settings).filter(Settings.phone_number == phone_number).first()
-    return settings
+    user = db.query(User).filter(User.phone_number == phone_number).first()  # Changed Settings to User
+    return user
 
 
 @app.get("/")
 async def root():
     return {"message": "Welcome to Wazobia"}
 
-@app.get("/signup/form", response_class=HTMLResponse)
+@app.get("/signup", response_class=HTMLResponse)
 async def signup_form(request: Request):
     return templates.TemplateResponse("signup.html", {"request": request})
 
-@app.get("/settings/form", response_class=HTMLResponse)
+@app.get("/settings", response_class=HTMLResponse)
 async def settings_form(request: Request):
     return templates.TemplateResponse("settings.html", {"request": request})
 
@@ -81,12 +81,17 @@ async def signup(request: Request, db: Session = Depends(get_db)):
         if field not in data:
             return {"error": f"Missing field: {field}", "status": "error"}
         
-    # Convert nunber to use 234
+    # Convert number to use 234
     if data["phone_number"].startswith("0"):
         data["phone_number"] = "234" + data["phone_number"][1:]
     
-    # Create new settings object
-    settings = Settings(
+    # Check if user already exists
+    existing_user = db.query(User).filter(User.phone_number == data["phone_number"]).first()
+    if existing_user:
+        return {"error": "User already exists with this phone number", "status": "error"}
+
+    # Create new user object
+    user = User(
         first_name=data["first_name"],
         last_name=data["last_name"],
         phone_number=data["phone_number"],
@@ -96,9 +101,9 @@ async def signup(request: Request, db: Session = Depends(get_db)):
     )
 
     # Add to database
-    db.add(settings)
+    db.add(user)
     db.commit()
-    db.refresh(settings)
+    db.refresh(user)
 
     return {"message": "User created successfully", "status": "success"}
 
@@ -115,26 +120,25 @@ async def update_setting(request: Request, db: Session = Depends(get_db)):
     for field in required_fields:
         if field not in data:
             return {"error": f"Missing field: {field}", "status": "error"}
-    
-    # Convert nunber to use 234
+
+    # Convert number to use 234
     if data["phone_number"].startswith("0"):
         data["phone_number"] = "234" + data["phone_number"][1:]
-    
-    # Update settings object
-    settings = db.query(Settings).filter(Settings.phone_number == data["phone_number"]).first()
-    if not settings:
-        return {"error": "Settings not found for this phone number"}
 
-    settings.default_language = data["default_language"]
-    settings.output_language = data["output_language"]
-    settings.output_format = data["output_format"]
+    # Check if user exists before updating
+    user = db.query(User).filter(User.phone_number == data["phone_number"]).first()
+    if not user:
+        return {"error": "User does not exist with this phone number", "status": "error"}
+
+    user.default_language = data["default_language"]
+    user.output_language = data["output_language"]
+    user.output_format = data["output_format"]
 
     # Commit changes to database
     db.commit()
-    db.refresh(settings)
+    db.refresh(user)
 
     return {"message": "Settings updated successfully", "status": "success"}
-
 
   
 
@@ -170,7 +174,7 @@ async def webhook_get(request: Request):
 async def webhook_post(request: Request, db: Session = Depends(get_db)):
     try:
         body = await request.json()
-        print(f"Received body: {body}")
+        # print(f"Received body: {body}")
         entry = body.get("entry", [{}])[0]
         changes = entry.get("changes", [{}])[0]
         value = changes.get("value", {})
@@ -192,12 +196,16 @@ async def webhook_post(request: Request, db: Session = Depends(get_db)):
         user_phone_number = contacts[0].get("wa_id") if contacts else None
         if not user_phone_number:
             return PlainTextResponse("PROCESSED", status_code=status.HTTP_200_OK)
+        
+        print(f"User phone number: {user_phone_number}")
 
         # Handle text messages
         if messages and messages[0].get("text"):
             user_message = messages[0]["text"]["body"]
             user = await get_user_settings(phone_number=user_phone_number, db=db)
+            
             if user:
+                print("User found")
                 if user.output_format == "text":
                     text_response = await translator.text_to_text_translator(
                         user_message,
@@ -238,10 +246,10 @@ async def webhook_post(request: Request, db: Session = Depends(get_db)):
                             phone_number=user_phone_number,
                         )
             else:
-                signup_link = "https://signup"
+                print("User not found")
                 msg = (
                     f"Welcome to Wazobia, your AI translator right here on WhatsApp, "
-                    f"please click the link to signup \n{signup_link}"
+                    f"please click the link to signup \n{SIGNUP_PAGE}"
                 )
                 await send_message(message=msg, phone_number=user_phone_number)
 
@@ -255,17 +263,21 @@ async def webhook_post(request: Request, db: Session = Depends(get_db)):
                     f.write(audio_bytes)
 
                 user = await get_user_settings(phone_number=user_phone_number, db=db)
+                
                 if user:
+                    print("User found for audio processing")
                     if user.output_format == "text":
                         text_response = await translator.voice_to_text_translator(
-                            file=audio_file, language=user.default_language
+                            file=audio_file, default_language=user.default_language, output_language=user.output_language 
                         )
                         await send_message(
                             message=text_response, phone_number=user_phone_number
                         )
                     elif user.output_format == "audio":
                         status_audio = await translator.voice_to_voice_translator(
-                            file=audio_file
+                            file=audio_file,
+                            default_language=user.default_language,
+                            output_language=user.output_language,
                         )
                         if status_audio:
                             await send_voice_message("new.mp3", user_phone_number)
@@ -292,10 +304,10 @@ async def webhook_post(request: Request, db: Session = Depends(get_db)):
                                 phone_number=user_phone_number,
                             )
                 else:
-                    signup_link = "https://signup"
+                    print("User not found for audio processing")
                     msg = (
                         f"Welcome to Wazobia, your AI translator right here on WhatsApp, "
-                        f"please click the link to signup \n{signup_link}"
+                        f"please click the link to signup \n{SIGNUP_PAGE}"
                     )
                     await send_message(message=msg, phone_number=user_phone_number)
                 # Clean up files

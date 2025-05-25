@@ -12,7 +12,7 @@
       class="bg-white shadow-md rounded-xl p-6 w-full max-w-md space-y-4"
     >
       <h2 class="text-2xl font-semibold text-center text-gray-800">
-        Language Preference Form
+        Get Started with Wazobia
       </h2>
 
       <!-- First Name -->
@@ -120,6 +120,12 @@
       >
         Submit
       </button>
+      <p class="text-center text-sm text-gray-600 mt-2">
+        Already signed up?
+        <a href="/settings" class="text-blue-500 hover:underline"
+          >Update your preferences</a
+        >
+      </p>
     </form>
 
     <script>
@@ -151,29 +157,30 @@
         event.preventDefault();
 
         const data = {
-          firstName: document.getElementById("firstName").value,
-          lastName: document.getElementById("lastName").value,
-          phone: document.getElementById("phone").value,
-          defaultLang: document.getElementById("defaultLang").value,
-          translateTo: document.getElementById("translateTo").value,
-          outputFormat: document.getElementById("outputFormat").value,
+          first_name: document.getElementById("firstName").value,
+          last_name: document.getElementById("lastName").value,
+          phone_number: document.getElementById("phone").value,
+          default_language: document.getElementById("defaultLang").value,
+          output_language: document.getElementById("translateTo").value,
+          output_format: document.getElementById("outputFormat").value,
         };
 
-        fetch("https://", {
+        fetch("/signup", { // Use relative path if frontend and backend are served together
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         })
-          .then((response) => {
-            if (!response.ok) throw new Error("Network response was not ok");
-            return response.text();
-          })
-          .then(() => {
-            alert("Form submitted successfully!");
-            form.reset();
-            validateForm();
+          .then((response) => response.json())
+          .then((result) => {
+            if (result.status === "success") {
+              alert("Account created successfully, you can now return to WhatsApp!");
+              form.reset();
+              validateForm();
+            } else {
+              alert(result.error || "Failed to submit the form.");
+            }
           })
           .catch((error) => {
             console.error("Error:", error);

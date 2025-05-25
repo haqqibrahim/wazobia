@@ -7,14 +7,14 @@ from sqlalchemy import Column, Integer, String
 
 load_dotenv()
 
-DATABASE_URL = "postgresql://neondb_owner:npg_yhU1qsA7demW@ep-autumn-block-abr908l0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL = os.getenv("DB_URL")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-class Settings(Base):
-    __tablename__ = "settings"
+class User(Base):  # Renamed from Settings to User
+    __tablename__ = "user"  # Renamed table
 
     id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String)
