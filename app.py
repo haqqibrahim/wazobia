@@ -217,7 +217,7 @@ async def webhook_post(request: Request, db: Session = Depends(get_db)):
                     )
                 elif user.output_format == "audio":
                     status_audio = await translator.text_to_voice_translator(
-                        user_message, language=user.output_language
+                        user_message, input_language=user.default_language, output_language=user.output_language
                     )
                     if status_audio:
                         await send_voice_message("new.wav", user_phone_number)
@@ -233,7 +233,7 @@ async def webhook_post(request: Request, db: Session = Depends(get_db)):
                         target=user.output_language,
                     )
                     status_audio = await translator.text_to_voice_translator(
-                        user_message, language=user.output_language
+                        user_message, input_language= user.default_language, output_language=user.output_language
                     )
                     await send_message(
                         message=text_response, phone_number=user_phone_number
@@ -288,10 +288,10 @@ async def webhook_post(request: Request, db: Session = Depends(get_db)):
                             )
                     else:
                         text_response = await translator.voice_to_text_translator(
-                            file=audio_file, language=user.default_language
+                            file=audio_file, default_language=user.default_language, output_language=user.output_language
                         )
                         status_audio = await translator.voice_to_voice_translator(
-                            file=audio_file, language=user.output_language
+                            file=audio_file, default_language=user.default_language, output_language=user.output_language
                         )
                         await send_message(
                             message=text_response, phone_number=user_phone_number
