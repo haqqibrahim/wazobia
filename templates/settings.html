@@ -3,40 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <title>Update Language Preference</title>
+    <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   </head>
   <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <!--
+      User Settings Form
+      Allows users to update their language and output preferences.
+      Fields: Phone Number, Default Language, Translate To, Output Format.
+    -->
     <form
       id="updateForm"
       class="bg-white shadow-md rounded-xl p-6 w-full max-w-md space-y-4"
+      autocomplete="off"
     >
       <h2 class="text-2xl font-semibold text-center text-gray-800">
         Update Language Preference
       </h2>
 
-      <!-- Phone -->
+      <!-- Phone Number Input -->
       <div>
-        <label for="phone" class="block text-sm font-medium text-gray-700"
-          >Phone Number</label
-        >
+        <label for="phone" class="block text-sm font-medium text-gray-700">
+          Phone Number
+        </label>
         <input
           type="tel"
           id="phone"
+          name="phone"
           required
           pattern="^(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4,7}$"
-          placeholder="e.g. +234123456789"
+          placeholder="e.g. 08123456789"
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
         />
       </div>
 
-      <!-- Default Language -->
+      <!-- Default Language Select -->
       <div>
-        <label for="defaultLang" class="block text-sm font-medium text-gray-700"
-          >Default Language</label
-        >
+        <label for="defaultLang" class="block text-sm font-medium text-gray-700">
+          Default Language
+        </label>
         <select
           id="defaultLang"
+          name="defaultLang"
           required
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
         >
@@ -48,13 +57,14 @@
         </select>
       </div>
 
-      <!-- Translate To -->
+      <!-- Translate To Select -->
       <div>
-        <label for="translateTo" class="block text-sm font-medium text-gray-700"
-          >Translate To</label
-        >
+        <label for="translateTo" class="block text-sm font-medium text-gray-700">
+          Translate To
+        </label>
         <select
           id="translateTo"
+          name="translateTo"
           required
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
         >
@@ -66,15 +76,14 @@
         </select>
       </div>
 
-      <!-- Output Format -->
+      <!-- Output Format Select -->
       <div>
-        <label
-          for="outputFormat"
-          class="block text-sm font-medium text-gray-700"
-          >Output Format</label
-        >
+        <label for="outputFormat" class="block text-sm font-medium text-gray-700">
+          Output Format
+        </label>
         <select
           id="outputFormat"
+          name="outputFormat"
           required
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
         >
@@ -85,7 +94,7 @@
         </select>
       </div>
 
-      <!-- Submit -->
+      <!-- Submit Button -->
       <button
         type="submit"
         id="submitBtn"
@@ -101,10 +110,21 @@
     </form>
 
     <script>
+      /**
+       * Handles client-side form validation and submission.
+       * Validates all fields, enables/disables submit button,
+       * and sends data to the backend using fetch API.
+       */
+
+      // Get form and input elements
       const form = document.getElementById("updateForm");
       const inputs = form.querySelectorAll("input, select");
       const submitBtn = document.getElementById("submitBtn");
 
+      /**
+       * Validates the form fields.
+       * Enables the submit button only if all fields are valid.
+       */
       function validateForm() {
         let isValid = true;
         inputs.forEach((input) => {
@@ -115,6 +135,7 @@
         submitBtn.disabled = !isValid;
       }
 
+      // Attach input and change event listeners for real-time validation
       inputs.forEach((input) => {
         input.addEventListener("input", () => {
           input.reportValidity();
@@ -123,12 +144,19 @@
         input.addEventListener("change", validateForm);
       });
 
+      // Initial validation on page load
       validateForm();
 
+      /**
+       * Handles form submission.
+       * Sends form data as JSON to the backend endpoint.
+       * Handles success and error responses.
+       * @param {Event} event - The form submit event
+       */
       form.addEventListener("submit", function (event) {
         event.preventDefault();
 
-        // Match backend expected keys
+        // Prepare data object matching backend expectations
         const data = {
           phone_number: document.getElementById("phone").value,
           default_language: document.getElementById("defaultLang").value,
@@ -136,14 +164,21 @@
           output_format: document.getElementById("outputFormat").value,
         };
 
-        fetch("/settings", { // Use relative path if served from same domain
+        // Send data to backend using fetch API
+        fetch("/settings", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            // Check if response is JSON
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
           .then((result) => {
             if (result.status === "success") {
               alert("Preferences updated successfully, you can now return to WhatsApp!");
@@ -154,6 +189,7 @@
             }
           })
           .catch((error) => {
+            // Handle network or server errors
             console.error("Error:", error);
             alert("Failed to update preferences.");
           });

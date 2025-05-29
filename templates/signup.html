@@ -3,66 +3,81 @@
   <head>
     <meta charset="UTF-8" />
     <title>Language Form</title>
+    <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   </head>
   <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <!--
+      Signup Form for Wazobia
+      Collects user details and language preferences.
+      Fields: First Name, Last Name, Phone, Default Language, Translate To, Output Format
+    -->
     <form
       id="languageForm"
       class="bg-white shadow-md rounded-xl p-6 w-full max-w-md space-y-4"
+      autocomplete="off"
+      novalidate
     >
       <h2 class="text-2xl font-semibold text-center text-gray-800">
         Get Started with Wazobia
       </h2>
 
-      <!-- First Name -->
+      <!-- First Name Field -->
       <div>
-        <label for="firstName" class="block text-sm font-medium text-gray-700"
-          >First Name</label
-        >
+        <label for="firstName" class="block text-sm font-medium text-gray-700">
+          First Name
+        </label>
         <input
           type="text"
           id="firstName"
+          name="first_name"
           required
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          autocomplete="given-name"
         />
       </div>
 
-      <!-- Last Name -->
+      <!-- Last Name Field -->
       <div>
-        <label for="lastName" class="block text-sm font-medium text-gray-700"
-          >Last Name</label
-        >
+        <label for="lastName" class="block text-sm font-medium text-gray-700">
+          Last Name
+        </label>
         <input
           type="text"
           id="lastName"
+          name="last_name"
           required
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          autocomplete="family-name"
         />
       </div>
 
-      <!-- Phone -->
+      <!-- Phone Number Field -->
       <div>
-        <label for="phone" class="block text-sm font-medium text-gray-700"
-          >Phone Number</label
-        >
+        <label for="phone" class="block text-sm font-medium text-gray-700">
+          Phone Number
+        </label>
         <input
           type="tel"
           id="phone"
+          name="phone_number"
           required
           pattern="^(\+\d{1,2}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4,7}$"
-          placeholder="e.g. +234123456789"
+          placeholder="e.g. 08123456789"
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          autocomplete="tel"
         />
       </div>
 
-      <!-- Default Language -->
+      <!-- Default Language Dropdown -->
       <div>
-        <label for="defaultLang" class="block text-sm font-medium text-gray-700"
-          >Default Language</label
-        >
+        <label for="defaultLang" class="block text-sm font-medium text-gray-700">
+          Default Language
+        </label>
         <select
           id="defaultLang"
+          name="default_language"
           required
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
         >
@@ -74,13 +89,14 @@
         </select>
       </div>
 
-      <!-- Translate To -->
+      <!-- Translate To Dropdown -->
       <div>
-        <label for="translateTo" class="block text-sm font-medium text-gray-700"
-          >Translate To</label
-        >
+        <label for="translateTo" class="block text-sm font-medium text-gray-700">
+          Translate To
+        </label>
         <select
           id="translateTo"
+          name="output_language"
           required
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
         >
@@ -92,15 +108,14 @@
         </select>
       </div>
 
-      <!-- Output Format (Dropdown) -->
+      <!-- Output Format Dropdown -->
       <div>
-        <label
-          for="outputFormat"
-          class="block text-sm font-medium text-gray-700"
-          >Output Format</label
-        >
+        <label for="outputFormat" class="block text-sm font-medium text-gray-700">
+          Output Format
+        </label>
         <select
           id="outputFormat"
+          name="output_format"
           required
           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
         >
@@ -111,7 +126,7 @@
         </select>
       </div>
 
-      <!-- Submit -->
+      <!-- Submit Button -->
       <button
         type="submit"
         id="submitBtn"
@@ -122,17 +137,28 @@
       </button>
       <p class="text-center text-sm text-gray-600 mt-2">
         Already signed up?
-        <a href="/settings" class="text-blue-500 hover:underline"
-          >Update your preferences</a
-        >
+        <a href="/settings" class="text-blue-500 hover:underline">
+          Update your preferences
+        </a>
       </p>
     </form>
 
     <script>
+      /**
+       * Handles client-side validation and form submission for the signup form.
+       * - Validates all fields before enabling submit.
+       * - Submits form data as JSON to the backend.
+       * - Handles success and error responses.
+       */
+
+      // Get form and input elements
       const form = document.getElementById("languageForm");
       const inputs = form.querySelectorAll("input, select");
       const submitBtn = document.getElementById("submitBtn");
 
+      /**
+       * Validates the form fields and enables/disables the submit button.
+       */
       function validateForm() {
         let isValid = true;
         inputs.forEach((input) => {
@@ -143,6 +169,7 @@
         submitBtn.disabled = !isValid;
       }
 
+      // Attach input and change event listeners for real-time validation
       inputs.forEach((input) => {
         input.addEventListener("input", () => {
           input.reportValidity();
@@ -151,28 +178,41 @@
         input.addEventListener("change", validateForm);
       });
 
+      // Initial validation on page load
       validateForm();
 
+      /**
+       * Handles form submission.
+       * Sends form data as JSON to the backend endpoint.
+       * Displays alerts based on response.
+       * @param {Event} event - The form submit event
+       */
       form.addEventListener("submit", function (event) {
         event.preventDefault();
 
+        // Gather form data
         const data = {
-          first_name: document.getElementById("firstName").value,
-          last_name: document.getElementById("lastName").value,
-          phone_number: document.getElementById("phone").value,
+          first_name: document.getElementById("firstName").value.trim(),
+          last_name: document.getElementById("lastName").value.trim(),
+          phone_number: document.getElementById("phone").value.trim(),
           default_language: document.getElementById("defaultLang").value,
           output_language: document.getElementById("translateTo").value,
           output_format: document.getElementById("outputFormat").value,
         };
 
-        fetch("/signup", { // Use relative path if frontend and backend are served together
+        // Send data to backend using fetch API
+        fetch("/signup", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            // Check if response is JSON
+            if (!response.ok) throw new Error("Network response was not ok");
+            return response.json();
+          })
           .then((result) => {
             if (result.status === "success") {
               alert("Account created successfully, you can now return to WhatsApp!");
