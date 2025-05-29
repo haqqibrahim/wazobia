@@ -8,3 +8,4 @@ pydub
 jinja2
 ffmpeg-python
 redis
+requests
