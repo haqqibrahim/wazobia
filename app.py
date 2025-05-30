@@ -5,8 +5,7 @@ This FastAPI application provides WhatsApp-based translation services.
 It supports user signup, settings management, and message translation (text/audio).
 It uses SQLAlchemy for database operations, Redis for deduplication, and Jinja2 for templating.
 
-Author: [Your Name]
-Date: [Date]
+
 """
 
 import os
