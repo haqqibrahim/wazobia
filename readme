@@ -1,0 +1,172 @@
+# Wazobia: WhatsApp AI Translator
+
+Wazobia is a FastAPI-based application that enables seamless translation of text and voice messages on WhatsApp. Users can sign up, set their language preferences, and interact with the bot to translate messages between English, Igbo, Yoruba, and Hausa, with output as text, voice, or both.
+
+---
+
+## Features
+
+- **WhatsApp Integration:** Send and receive messages via WhatsApp using the WhatsApp Cloud API.
+- **Text & Voice Translation:** Translate both text and audio messages between supported languages.
+- **User Preferences:** Users can set and update their default and output languages, as well as choose output format (text, voice, or both).
+- **Signup & Settings Web Forms:** User-friendly web forms for onboarding and updating preferences.
+- **Persistent Storage:** User data is stored in a PostgreSQL database via SQLAlchemy.
+- **Redis Deduplication:** Prevents duplicate message processing using Redis.
+- **Audio Processing:** Converts and handles audio files for WhatsApp compatibility.
+- **Spitch API Integration:** Uses Spitch for translation and speech synthesis.
+
+---
+
+## Project Structure
+
+```
+wazobia/
+├── app.py                # FastAPI endpoints
+├── database.py           # SQLAlchemy models and DB session
+├── models.py             # Translator and related logic
+├── wa_handler.py         # WhatsApp message/media handling
+├── templates/
+│   ├── signup.html       # Signup form
+│   └── settings.html     # Settings form
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## Setup & Installation
+
+### 1. Clone the Repository
+
+```sh
+git clone <your-repo-url>
+cd wazobia
+```
+
+### 2. Create and Activate a Virtual Environment
+
+```sh
+python -m venv wazobia
+# On Windows:
+wazobia\Scripts\activate
+# On macOS/Linux:
+source wazobia/bin/activate
+```
+
+### 3. Install Dependencies
+
+```sh
+pip install -r requirements.txt
+```
+
+### 4. Configure Environment Variables
+
+Copy `.env` and fill in your credentials:
+
+- PostgreSQL DB URL
+- WhatsApp Cloud API credentials
+- Spitch API key
+- Redis credentials
+- Signup/Settings URLs
+
+**Example `.env`:**
+
+```
+DB_URL="postgresql://<user>:<pass>@<host>/<db>?sslmode=require"
+WA_PHONE_NUMBER_ID=...
+WA_VERIFY_TOKEN=...
+WA_ACCESS_TOKEN=...
+SPITCH_API_KEY=...
+REDIS_HOST=...
+REDIS_PORT=...
+REDIS_USERNAME=...
+REDIS_PASSWORD=...
+SIGNUP="https://<your-domain>/signup"
+SETTINGS="https://<your-domain>/settings"
+```
+
+---
+
+## Running the App
+
+```sh
+uvicorn app:app --reload
+```
+
+- Access the signup form: [http://localhost:8000/signup](http://localhost:8000/signup)
+- Access the settings form: [http://localhost:8000/settings](http://localhost:8000/settings)
+
+---
+
+## WhatsApp Webhook Setup
+
+1. Expose your server (for development, use [ngrok](https://ngrok.com/) or Azure Dev Tunnels).
+2. Configure WhatsApp Cloud API to point to your `/webhook` endpoint.
+3. Set the verify token to match `WA_VERIFY_TOKEN` in your `.env`.
+
+---
+
+## Usage
+
+### User Signup
+
+- Visit `/signup` and fill in your details and preferences.
+- Your phone number will be used to identify you on WhatsApp.
+
+### Update Preferences
+
+- Visit `/settings` to update your language or output format.
+
+### WhatsApp Interaction
+
+- Send a text or voice message to the WhatsApp number linked to the bot.
+- The bot will reply according to your preferences:
+    - **Text:** Translated text reply.
+    - **Voice:** Translated voice message.
+    - **Both:** Both text and voice replies.
+
+---
+
+## Supported Languages
+
+- English (`en`)
+- Igbo (`ig`)
+- Yoruba (`yo`)
+- Hausa (`ha`)
+
+---
+
+## API Endpoints
+
+- `GET /signup` — Signup form (HTML)
+- `POST /signup` — Create new user
+- `GET /settings` — Settings form (HTML)
+- `POST /settings` — Update user preferences
+- `POST /webhook` — WhatsApp webhook (text/audio message handling)
+- `GET /webhook` — WhatsApp webhook verification
+- `POST /send_message` — Send WhatsApp message (internal/testing)
+
+---
+
+## Notes
+
+- Audio files are processed and converted as needed for WhatsApp compatibility.
+- Redis is used to deduplicate incoming WhatsApp messages.
+- Spitch API is required for translation and speech synthesis.
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Acknowledgements
+
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [SQLAlchemy](https://www.sqlalchemy.org/)
+- [Spitch API](https://spitch.io/)
+- [WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api)
+- [Redis](https://redis.io/)
+- [Jinja2](https://jinja.palletsprojects.com/)
